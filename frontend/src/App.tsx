@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 
 function App() {
-  const [status, setStatus] = useState("Checking backend...");
+  const [items, setItems] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000")
-      .then((res) => res.json())
-      .then((data) => setStatus(data.status))
-      .catch(() => setStatus("Backend unreachable"));
+    fetch("http://127.0.0.1:8000/memory")
+      .then(res => res.json())
+      .then(data => setItems(data.items));
   }, []);
 
   return (
     <div style={{ padding: 40 }}>
-      <h1>Domus</h1>
-      <p>Backend status: {status}</p>
+      <h1>Domus Household Memory</h1>
+
+      <ul>
+        {items.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 }

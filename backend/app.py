@@ -14,3 +14,13 @@ app.add_middleware(
 @app.get("/")
 def health():
     return {"status": "Domus backend running"}
+
+@app.get("/memory")
+def get_memory():
+    return {
+        "items": [
+            "Milk",
+            "Plumber Tuesday",
+            "Dog vet appointment"
+        ]
+    }
