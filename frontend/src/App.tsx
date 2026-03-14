@@ -6,8 +6,17 @@ type Message = {
   text: string;
 };
 
+type MemoryItem = {
+  text: string;
+  type: string;
+  subject: string;
+  details: string;
+  scheduled_for: string;
+  status: string;
+};
+
 function App() {
-  const [items, setItems] = useState<string[]>([]);
+  const [items, setItems] = useState<MemoryItem[]>([]);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -196,10 +205,19 @@ function App() {
             }}
           >
             {items.map((item, i) => (
-              <li key={i} style={{ marginBottom: "10px" }}>
-                <span>{item}</span>
+              <li key={i} style={{ marginBottom: "12px" }}>
+                <div>
+                  <div>{item.text}</div>
+                  <div style={{ fontSize: "13px", opacity: 0.65 }}>
+                    {item.type}
+                    {item.subject ? ` · ${item.subject}` : ""}
+                    {item.details ? ` · ${item.details}` : ""}
+                    {item.scheduled_for ? ` · ${item.scheduled_for}` : ""}
+                  </div>
+                </div>
+
                 <button
-                  onClick={() => deleteMemory(item)}
+                  onClick={() => deleteMemory(item.text)}
                   style={{
                     marginLeft: "12px",
                     cursor: "pointer",

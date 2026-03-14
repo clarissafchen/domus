@@ -32,24 +32,44 @@ def get_household_memory():
     return data["items"]
 
 
-def add_household_memory(text: str):
+def add_household_memory(
+    text: str,
+    type: str = "note",
+    subject: str = "",
+    details: str = "",
+    status: str = "active",
+):
     """
-    Add a new household memory item.
+    Add a new item to household memory.
 
-    Use this when the user asks you to:
-    - remember something
-    - add a task
-    - note something
-    - store an appointment
-    - add a grocery item
-    - track something for the household
+    Fields:
+    - text: short description
+    - type: appointment | task | grocery | note
+    - subject: who or what it relates to
+    - details: timing or extra context
+    - status: active | completed
     """
+
     res = requests.post(
         "http://127.0.0.1:8000/memory",
-        json={"text": text}
+        json={
+            "text": text,
+            "type": type,
+            "subject": subject,
+            "details": details,
+            "status": status,
+        }
     )
     res.raise_for_status()
-    return {"status": "memory stored", "text": text}
+
+    return {
+        "status": "memory stored",
+        "text": text,
+        "type": type,
+        "subject": subject,
+        "details": details,
+        "status": status,
+    }
 
 
 def delete_household_memory(text: str):
@@ -62,11 +82,14 @@ def delete_household_memory(text: str):
     - clear a reminder
     - take something off the list
     """
+
     res = requests.delete(
         "http://127.0.0.1:8000/memory",
         json={"text": text}
     )
+
     res.raise_for_status()
+
     return {"status": "memory deleted", "text": text}
 
 
@@ -77,7 +100,7 @@ def delete_household_memory(text: str):
 root_agent = Agent(
     model="gemini-2.5-flash",
     name="domus",
-    description="Household assistant with shared memory",
+    description="Household assistant with shared structured memory",
     instruction="""
 You are Domus, a helpful household assistant that maintains a shared family memory list.
 
@@ -88,7 +111,9 @@ You have three tools:
 
 Your job is to help a household stay organized by remembering tasks, reminders, appointments, and notes.
 
-Behavior rules:
+-----------------------------
+TOOL USAGE RULES
+-----------------------------
 
 1. If the user asks to show, list, or display the household list → call get_household_memory.
 
@@ -102,14 +127,63 @@ Behavior rules:
 
 6. When the user says "What do I need to know?", call get_household_memory and summarize the most important items.
 
-7. Stored memory should be concise.
+-----------------------------
+STRUCTURED MEMORY
+-----------------------------
+
+When storing memory, use structured fields when possible:
+
+Fields:
+- text → the short full description
+- type → appointment | task | grocery | note
+- subject → who or what the item is mainly about
+- details → timing or extra context
+- status → usually "active"
+
+Examples:
+
+User: "Remember Pascal vet appointment Tuesday at 3"
+
+Store:
+text: "Pascal vet appointment Tuesday at 3"
+type: "appointment"
+subject: "Pascal"
+details: "Tuesday at 3"
+status: "active"
+
+
+User: "Remember to buy paper towels"
+
+Store:
+text: "Buy paper towels"
+type: "grocery"
+subject: "paper towels"
+details: ""
+status: "active"
+
+
+User: "Remember plumber coming Thursday morning"
+
+Store:
+text: "Plumber Thursday morning"
+type: "appointment"
+subject: "plumber"
+details: "Thursday morning"
+status: "active"
+
+-----------------------------
+RESPONSE STYLE
+-----------------------------
+
+Stored memory should be concise.
+
 Example:
 User: "Remember that we need to buy paper towels"
 Stored item: "Buy paper towels"
 
-8. After adding an item, confirm it in one short sentence.
+After adding an item, confirm it in one short sentence.
 
-9. After deleting an item, confirm what was removed.
+After deleting an item, confirm what was removed.
 
 Example response format:
 

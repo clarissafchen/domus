@@ -42,6 +42,10 @@ app.add_middleware(
 # request schemas
 class MemoryItem(BaseModel):
     text: str
+    type: str = "note"
+    subject: str = ""
+    details: str = ""
+    status: str = "active"
 
 
 class ChatRequest(BaseModel):
@@ -64,8 +68,14 @@ def get_memory():
     items = []
     for doc in docs:
         data = doc.to_dict()
-        if "text" in data:
-            items.append(data["text"])
+
+        items.append({
+            "text": data.get("text", ""),
+            "type": data.get("type", "note"),
+            "subject": data.get("subject", ""),
+            "details": data.get("details", ""),
+            "status": data.get("status", "active"),
+        })
 
     return {"items": items}
 
@@ -73,8 +83,8 @@ def get_memory():
 # add new memory item
 @app.post("/memory")
 def add_memory(item: MemoryItem):
-    db.collection("memory").add({"text": item.text})
-    return {"status": "memory stored", "text": item.text}
+    db.collection("memory").add(item.dict())
+    return {"status": "memory stored", "item": item.dict()}
 
 
 # delete memory item
