@@ -2,12 +2,19 @@
 
 Household assistant with shared memory.
 
-## Run backend
+## Backend
+
+```bash
 cd backend
 source venv/bin/activate
+pip install -r requirements.txt
 python3 -m uvicorn app:app --reload
+```
 
-## Run agent
+## Agent
+
+```bash
 cd backend
 source venv/bin/activate
 adk run domus_agent
+```
