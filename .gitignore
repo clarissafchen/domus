@@ -1,3 +1,10 @@
+# macOS
+.DS_Store
+
+# Secrets
+firebase_key.json
+.env
+
 # Logs
 logs
 *.log
@@ -138,29 +145,15 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# -----------------------------
-# Python / Backend
-# -----------------------------
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
 # Virtual environments
+.venv/
 venv/
-backend/venv/
 
-# Backend secrets
-backend/firebase_key.json
-backend/.env
-
-# macOS
-.DS_Store
-
-# Python / backend
-backend/venv/
-backend/__pycache__/
-backend/firebase_key.json
-
-*.pyc
-__pycache__/
+# Google ADK
+.adk/
