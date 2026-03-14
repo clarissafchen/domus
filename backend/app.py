@@ -50,7 +50,14 @@ class StatusEnum(str, Enum):
 
 class MemoryItem(BaseModel):
     text: str
+<<<<<<< HEAD
     status: Optional[StatusEnum] = StatusEnum.ACTIVE
+=======
+    type: str = "note"
+    subject: str = ""
+    details: str = ""
+    status: str = "active"
+>>>>>>> 443ba3b (updated agent entry logic)
 
 
 class ChatRequest(BaseModel):
@@ -73,11 +80,22 @@ def get_memory():
     items = []
     for doc in docs:
         data = doc.to_dict()
+<<<<<<< HEAD
         if "text" in data:
             items.append({
                 "text": data["text"],
                 "status": data.get("status", StatusEnum.ACTIVE.value)
             })
+=======
+
+        items.append({
+            "text": data.get("text", ""),
+            "type": data.get("type", "note"),
+            "subject": data.get("subject", ""),
+            "details": data.get("details", ""),
+            "status": data.get("status", "active"),
+        })
+>>>>>>> 443ba3b (updated agent entry logic)
 
     return {"items": items}
 
@@ -85,6 +103,7 @@ def get_memory():
 # add new memory item
 @app.post("/memory")
 def add_memory(item: MemoryItem):
+<<<<<<< HEAD
     # Use the value of the Enum member if present, otherwise default to "active"
     status_val = item.status.value if item.status else StatusEnum.ACTIVE.value
     
@@ -97,6 +116,10 @@ def add_memory(item: MemoryItem):
         "text": item.text,
         "item_status": status_val
     }
+=======
+    db.collection("memory").add(item.dict())
+    return {"status": "memory stored", "item": item.dict()}
+>>>>>>> 443ba3b (updated agent entry logic)
 
 
 # delete memory item
