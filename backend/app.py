@@ -5,11 +5,27 @@ from pydantic import BaseModel
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types
+from domus_agent import root_agent
+
 # initialize Firebase
 cred = credentials.Certificate("firebase_key.json")
 firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
+# ADK runner/session setup
+APP_NAME = "domus"
+
+session_service = InMemorySessionService()
+
+runner = Runner(
+    agent=root_agent,
+    app_name=APP_NAME,
+    session_service=session_service,
+)
 
 # FastAPI app
 app = FastAPI()
@@ -23,9 +39,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# request schema
+# request schemas
 class MemoryItem(BaseModel):
     text: str
+
+
+class ChatRequest(BaseModel):
+    message: str
+    user_id: str = "clarissa"
+    session_id: str = "domus-demo"
 
 
 # health check
@@ -58,16 +80,14 @@ def add_memory(item: MemoryItem):
 # delete memory item
 @app.delete("/memory")
 def delete_memory(item: MemoryItem):
-    print("DELETE REQUEST:", item.text)
-
     docs = db.collection("memory").stream()
 
     deleted = 0
-    target = item.text.lower()
+    target = item.text.lower().strip()
 
     for doc in docs:
         data = doc.to_dict()
-        text = data.get("text", "").lower()
+        text = data.get("text", "").lower().strip()
 
         if target in text:
             doc.reference.delete()
@@ -78,3 +98,66 @@ def delete_memory(item: MemoryItem):
         "text": item.text,
         "deleted": deleted
     }
+
+
+# optional simple backend-generated briefing
+@app.get("/briefing")
+def get_briefing():
+    docs = db.collection("memory").order_by("text").stream()
+
+    items = []
+    for doc in docs:
+        data = doc.to_dict()
+        if "text" in data:
+            items.append(data["text"])
+
+    if not items:
+        return {"summary": "There are no household updates right now."}
+
+    bullets = "\n".join([f"• {item}" for item in items[:5]])
+
+    return {
+        "summary": f"Here’s what you need to know:\n\n{bullets}"
+    }
+
+
+# ADK agent chat endpoint
+@app.post("/chat")
+def chat(request: ChatRequest):
+    existing_session = session_service.get_session_sync(
+        app_name=APP_NAME,
+        user_id=request.user_id,
+        session_id=request.session_id,
+    )
+
+    if existing_session is None:
+        session_service.create_session_sync(
+            app_name=APP_NAME,
+            user_id=request.user_id,
+            session_id=request.session_id,
+        )
+
+    user_message = types.Content(
+        role="user",
+        parts=[types.Part(text=request.message)],
+    )
+
+    final_text = "Domus did not return a response."
+
+    events = runner.run(
+        user_id=request.user_id,
+        session_id=request.session_id,
+        new_message=user_message,
+    )
+
+    for event in events:
+        if event.is_final_response():
+            if event.content and event.content.parts:
+                final_text = "".join(
+                    part.text
+                    for part in event.content.parts
+                    if getattr(part, "text", None)
+                )
+            break
+
+    return {"reply": final_text}
