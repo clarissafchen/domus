@@ -1,6 +1,9 @@
 # imports
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from enum import Enum
+from typing import Optional
+
 from pydantic import BaseModel
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -40,8 +43,14 @@ app.add_middleware(
 )
 
 # request schemas
+class StatusEnum(str, Enum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+
+
 class MemoryItem(BaseModel):
     text: str
+    status: Optional[StatusEnum] = StatusEnum.ACTIVE
 
 
 class ChatRequest(BaseModel):
@@ -65,7 +74,10 @@ def get_memory():
     for doc in docs:
         data = doc.to_dict()
         if "text" in data:
-            items.append(data["text"])
+            items.append({
+                "text": data["text"],
+                "status": data.get("status", StatusEnum.ACTIVE.value)
+            })
 
     return {"items": items}
 
@@ -73,8 +85,18 @@ def get_memory():
 # add new memory item
 @app.post("/memory")
 def add_memory(item: MemoryItem):
-    db.collection("memory").add({"text": item.text})
-    return {"status": "memory stored", "text": item.text}
+    # Use the value of the Enum member if present, otherwise default to "active"
+    status_val = item.status.value if item.status else StatusEnum.ACTIVE.value
+    
+    db.collection("memory").add({
+        "text": item.text,
+        "status": status_val
+    })
+    return {
+        "status": "memory stored",
+        "text": item.text,
+        "item_status": status_val
+    }
 
 
 # delete memory item
@@ -97,6 +119,30 @@ def delete_memory(item: MemoryItem):
         "status": "memory deleted",
         "text": item.text,
         "deleted": deleted
+    }
+
+
+# update memory item
+@app.put("/memory")
+def update_memory(item: MemoryItem):
+    docs = db.collection("memory").stream()
+
+    updated = 0
+    target = item.text.lower().strip()
+    status_val = item.status.value if item.status else StatusEnum.ACTIVE.value
+
+    for doc in docs:
+        data = doc.to_dict()
+        text = data.get("text", "").lower().strip()
+
+        if target in text:
+            doc.reference.update({"status": status_val})
+            updated += 1
+
+    return {
+        "status": "memory updated",
+        "text": item.text,
+        "updated": updated
     }
 
 
