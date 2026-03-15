@@ -3,6 +3,7 @@
 import Message from "@/components/message";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   DropdownMenu,
@@ -11,12 +12,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Textarea } from "@/components/ui/textarea";
 
-import { PlusIcon, SendHorizonalIcon } from "lucide-react";
+import {
+  AudioLinesIcon,
+  EllipsisIcon,
+  PlusIcon,
+  SendHorizonalIcon,
+  TrashIcon,
+} from "lucide-react";
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -34,24 +42,11 @@ export default function Home() {
   const [messages, setMessages] = useState<MessageType[]>([
     {
       role: "assistant",
-
-      text: "Hi, I&apos;m Domus. Ask me about your household tasks or tell me something to remember",
+      text: "Hi, I'm Domus. Ask me about your household tasks or tell me something to remember.",
     },
   ]);
 
   const API_URL = "http://127.0.0.1:8000";
-
-  const loadMemory = async () => {
-    try {
-      const res = await fetch(`${API_URL}/memory`);
-
-      const data = await res.json();
-
-      setItems(data.items || []);
-    } catch (err) {
-      console.error("Failed to load memory:", err);
-    }
-  };
 
   const getMemory = useCallback(async () => {
     try {
@@ -80,10 +75,11 @@ export default function Home() {
   const createMemory = async (text: string) => {
     const payload = text.trim();
 
+    console.log({ payload });
+
     if (!payload) return;
 
     //TODO: Set "loading" state for messages that are still processing
-
     setMessages((prev) => [...prev, { role: "user", text: payload as string }]);
 
     setInput("");
@@ -96,7 +92,11 @@ export default function Home() {
           "Content-Type": "application/json",
         },
 
-        body: JSON.stringify({ text: payload }),
+        body: JSON.stringify({
+          message: payload,
+          user_id: "clarissa",
+          session_id: "domus-demo",
+        }),
       });
 
       const data = await res.json();
@@ -123,6 +123,26 @@ export default function Home() {
     }
   };
 
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+
+    const payload = input.trim();
+
+    if (payload) {
+      createMemory(payload);
+    } else {
+      // Execute Voice Recording / AudioLinesIcon logic
+      console.log("Initialize Web Audio API sequence");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -142,7 +162,7 @@ export default function Home() {
 
   return (
     <div className="bg-muted flex h-[100dvh] flex-col items-center justify-center py-8">
-      <main className="flex w-full max-w-5xl flex-1 flex-col overflow-hidden">
+      <main className="flex w-full max-w-6xl flex-1 flex-col overflow-hidden">
         <div className="flex">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -165,22 +185,26 @@ export default function Home() {
           </DropdownMenu>
         </div>
 
-        <div className="mt-6 flex flex-1 columns-2">
+        <div className="mt-6 flex flex-1 min-h-0">
           <div className="flex w-full flex-1 flex-col overflow-hidden rounded-l-md border bg-white">
-            <ScrollArea className="min-h-0 w-full flex-1 gap-5 p-4">
-              <div className="space-y-4">
-                <Message message={{ role: "user", text: "Question" }} />
-
-                <Message message={{ role: "assistant", text: "Response" }} />
+            <ScrollArea className="flex-1 min-h-0 w-full">
+              <div className="space-y-6 p-4">
+                {messages.map((message, index) => (
+                  <Message key={index} message={message} />
+                ))}
               </div>
             </ScrollArea>
 
-            {/* shrink-0 prevents the input block from compressing */}
-
-            <div className="grid w-full shrink-0 gap-2 p-2">
+            <form
+              className="grid w-full shrink-0 gap-2 p-4"
+              onSubmit={handleSubmit}
+            >
               <Textarea
-                placeholder="Type your message here."
+                placeholder="What do I need to know?"
                 className="bg-muted rounded-md border-none shadow-none"
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                value={input}
               />
 
               <div className="flex justify-between">
@@ -197,26 +221,157 @@ export default function Home() {
 
                   <DropdownMenuContent side="top" align="start">
                     <DropdownMenuGroup>
-                      <DropdownMenuItem>Profile</DropdownMenuItem>
-
-                      <DropdownMenuItem>Billing</DropdownMenuItem>
+                      <DropdownMenuItem>
+                        Add photos &amp; files
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>Add from Drive</DropdownMenuItem>
                     </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Button className="rounded-md" size={"icon"}>
-                  <SendHorizonalIcon />
+                <Button type="submit" className="rounded-md" size={"icon"}>
+                  {input ? <SendHorizonalIcon /> : <AudioLinesIcon />}
                 </Button>
+              </div>
+            </form>
+          </div>
+
+          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-r-md border-t border-r border-b bg-white/40">
+            <ScrollArea className="flex-1 min-h-0 w-full">
+              <div className="space-y-4 p-4">
+                {items.map((item, i) => (
+                  <li key={i} className="list-none">
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id={`toggle-checkbox-${i}`}
+                        name="toggle-checkbox"
+                        className="bg-white"
+                      />
+                      <FieldLabel htmlFor={`toggle-checkbox-${i}`}>
+                        {item}
+                      </FieldLabel>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant={"ghost"} size={"icon"}>
+                            <EllipsisIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem onClick={() => deleteMemory(item)}>
+                              <TrashIcon className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Field>
+                  </li>
+                ))}
+              </div>
+            </ScrollArea>
+            <div className="shrink-0 p-4">
+              <div className="flex flex-row-reverse">
+                <Button variant={"secondary"}>Show Completed</Button>
               </div>
             </div>
           </div>
-
-          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-r-md border-t border-r border-b">
-            <ScrollArea className="min-h-0 w-full flex-1 gap-5 px-2 py-4">
-              <div className="space-y-4"></div>
-            </ScrollArea>
-          </div>
         </div>
+
+
+
+        {/* <div className="mt-6 flex flex-1 columns-2">
+          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-l-md border bg-white">
+            <ScrollArea className="min-h-0 w-full flex-1 gap-5 p-4">
+              <div className="space-y-6">
+                {messages.map((message, index) => (
+                  <Message key={index} message={message} />
+                ))}
+              </div>
+            </ScrollArea>
+
+            <form
+              className="grid w-full shrink-0 gap-2 p-4"
+              onSubmit={handleSubmit}
+            >
+              <Textarea
+                placeholder="What do I need to know?"
+                className="bg-muted rounded-md border-none shadow-none"
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                value={input}
+              />
+
+              <div className="flex justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      className="rounded-md"
+                      size={"icon"}
+                      variant={"ghost"}
+                    >
+                      <PlusIcon />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent side="top" align="start">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        Add photos &amp; files
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>Add from Drive</DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button type="submit" className="rounded-md" size={"icon"}>
+                  {input ? <SendHorizonalIcon /> : <AudioLinesIcon />}
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-r-md border-t border-r border-b bg-white/40">
+            <ScrollArea className="min-h-0 w-full flex-1 gap-5 p-4">
+              <div className="space-y-4">
+                {items.map((item, i) => (
+                  <li key={i}>
+                    <Field orientation="horizontal">
+                      <Checkbox
+                        id="toggle-checkbox"
+                        name="toggle-checkbox"
+                        className="bg-white"
+                      />
+                      <FieldLabel htmlFor="toggle-checkbox">{item}</FieldLabel>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant={"ghost"} size={"icon"}>
+                            <EllipsisIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem>
+                              <TrashIcon />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Field>
+                  </li>
+                ))}
+              </div>
+            </ScrollArea>
+            <div className="p-4">
+              <div className="flex flex-row-reverse">
+                <Button variant={"secondary"}>Completed</Button>
+              </div>
+            </div>
+          </div>
+        </div> */}
       </main>
     </div>
   );
