@@ -1,9 +1,16 @@
-import { MessageType } from "@/app/page";
 import clsx from "clsx";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-export default function Message({ message }: { message: MessageType }) {
+import { MessageType } from "@/app/page";
+
+export default function Message({
+  message,
+  size,
+}: {
+  message: MessageType;
+  size?: string;
+}) {
   return (
     <div>
       <div
@@ -12,7 +19,7 @@ export default function Message({ message }: { message: MessageType }) {
         )}
       >
         {message.role === "assistant" ? (
-          <div className="size-4 bg-black mb-4"></div>
+          <div className="mb-4 size-4 bg-black"></div>
         ) : (
           ""
         )}
@@ -22,6 +29,7 @@ export default function Message({ message }: { message: MessageType }) {
             message.role === "assistant"
               ? "prose prose-sm prose-blue max-w-none"
               : "max-w-[320px] rounded-tl-md rounded-b-md border border-blue-100 bg-blue-50 p-2 text-blue-900",
+            message.role === "user" && size === "lg" ? "max-w-[420px]" : "",
           )}
         >
           {message.role === "assistant" ? (
