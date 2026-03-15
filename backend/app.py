@@ -1,9 +1,6 @@
 # imports
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from enum import Enum
-from typing import Optional
-
 from pydantic import BaseModel
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -133,31 +130,6 @@ def delete_memory(item: MemoryItem):
         "text": item.text,
         "deleted": deleted
     }
-
-
-# update memory item
-@app.put("/memory")
-def update_memory(item: MemoryItem):
-    docs = db.collection("memory").stream()
-
-    updated = 0
-    target = item.text.lower().strip()
-    status_val = item.status.value if item.status else StatusEnum.ACTIVE.value
-
-    for doc in docs:
-        data = doc.to_dict()
-        text = data.get("text", "").lower().strip()
-
-        if target in text:
-            doc.reference.update({"status": status_val})
-            updated += 1
-
-    return {
-        "status": "memory updated",
-        "text": item.text,
-        "updated": updated
-    }
-
 
 # optional simple backend-generated briefing
 @app.get("/briefing")
