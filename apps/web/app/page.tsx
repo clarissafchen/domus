@@ -1,6 +1,7 @@
 "use client";
 
 import Message from "@/components/message";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,6 +11,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -21,12 +23,17 @@ import clsx from "clsx";
 
 import {
   AudioLinesIcon,
+  BirdhouseIcon,
   EllipsisIcon,
+  LogOutIcon,
   PanelRightClose,
   PanelRightOpen,
   PlusIcon,
   SendHorizonalIcon,
+  Settings2Icon,
+  SettingsIcon,
   TrashIcon,
+  UserIcon,
 } from "lucide-react";
 
 import { useCallback, useEffect, useState } from "react";
@@ -171,39 +178,68 @@ export default function Home() {
               <Button
                 size={"sm"}
                 variant="ghost"
-                className="hover:bg-muted hover:text-foreground"
+                className="hover:bg-muted hover:text-foreground gap-2"
               >
+                <BirdhouseIcon className="size-[20px]" />
                 <label className="text-lg font-bold">My Family</label>
               </Button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent>
+            <DropdownMenuContent className="w-56">
               <DropdownMenuGroup>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-
-                <DropdownMenuItem>Billing</DropdownMenuItem>
+                <DropdownMenuItem>My Family</DropdownMenuItem>
+                <DropdownMenuItem>Workgroup</DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Create new group</DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <Button
               variant={"secondary"}
               size={"icon"}
-              className="size-7"
               onClick={() => setShowSidebar(!showSidebar)}
             >
               {showSidebar ? <PanelRightClose /> : <PanelRightOpen />}
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant={"secondary"} size={"icon"}>
+                  <SettingsIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <UserIcon />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings2Icon />
+                    Settings
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <LogOutIcon />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        <div className="mt-6 flex min-h-0 flex-1 w-full overflow-hidden">
+        <div className="mt-6 flex min-h-0 w-full flex-1 overflow-hidden">
           {/* Main Chat Panel */}
           <div
             className={clsx(
               "flex flex-col overflow-hidden border bg-white transition-all duration-300 ease-in-out",
-              showSidebar ? "w-1/2 rounded-l-md" : "w-full rounded-md"
+              showSidebar ? "w-1/2 rounded-l-md" : "w-full rounded-md",
             )}
           >
             <ScrollArea className="min-h-0 w-full flex-1">
@@ -261,7 +297,7 @@ export default function Home() {
               "flex flex-col overflow-hidden bg-white/40 transition-all duration-300 ease-in-out",
               showSidebar
                 ? "w-1/2 rounded-r-md border-t border-r border-b opacity-100"
-                : "w-0 border-none opacity-0"
+                : "w-0 border-none opacity-0",
             )}
           >
             {/* Fixed-width inner wrapper to prevent text reflow during transition */}
