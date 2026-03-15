@@ -50,12 +50,8 @@ export default function Home() {
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
   const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [items, setItems] = useState<
-    { text: string; status: "active" | "completed" }[]
+    { id: string; text: string; status: "active" | "completed" }[]
   >([]);
-  // Visual state to let UI show checkmarks before disappearing
-  const [pendingUpdates, setPendingUpdates] = useState<
-    Record<string, "active" | "completed">
-  >({});
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<MessageType[]>([
     {
@@ -94,53 +90,31 @@ export default function Home() {
     }
   }, []);
 
-  const deleteMemory = async (text: string) => {
+  const deleteMemory = async (id: string) => {
     await fetch(`${API_URL}/memory`, {
       method: "DELETE",
-
       headers: {
         "Content-Type": "application/json",
       },
-
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ id }),
     });
 
-    await getMemory(); // Refresh the list after deleting
+    await getMemory();
   };
 
-  const updateMemory = async (text: string, status: "active" | "completed") => {
-    // Show the checkmark locally right away
-    setPendingUpdates((prev) => ({ ...prev, [text]: status }));
-
+  const updateMemory = async (id: string, status: "active" | "completed") => {
     try {
       await fetch(`${API_URL}/memory`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text, status }),
+        body: JSON.stringify({ id, status }),
       });
 
-      // Filter it out of the master list after seeing the checkmark
-      setTimeout(() => {
-        setItems((prev) =>
-          prev.map((item) => (item.text === text ? { ...item, status } : item)),
-        );
-        // Clean up our floating visual state once it is officially recorded
-        setPendingUpdates((prev) => {
-          const newState = { ...prev };
-          delete newState[text];
-          return newState;
-        });
-      }, 1500);
+      await getMemory();
     } catch (err) {
       console.error("Failed to update memory:", err);
-      // Revert visual state
-      setPendingUpdates((prev) => {
-        const newState = { ...prev };
-        delete newState[text];
-        return newState;
-      });
       await getMemory();
     }
   };
@@ -425,69 +399,63 @@ export default function Home() {
                         return 1;
                       return 0;
                     })
-                    .map((item) => {
-                      // Overlay pending state if item is animating out
-                      const visualStatus =
-                        pendingUpdates[item.text] ?? item.status;
+                  .map((item) => {
+                    return (
+                      <li key={item.id} className="list-none">
+                        <Field orientation="horizontal">
+                          <Checkbox
+                            id={`toggle-checkbox-${item.id}`}
+                            name="toggle-checkbox"
+                            className="bg-white"
+                            checked={item.status === "completed"}
+                            onCheckedChange={(checked) => {
+                              updateMemory(
+                                item.id,
+                                checked === true ? "completed" : "active",
+                              );
+                            }}
+                          />
+                          <FieldLabel
+                            htmlFor={`toggle-checkbox-${item.id}`}
+                            className={clsx(
+                              item.status === "active"
+                                ? ""
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {item.text}
+                          </FieldLabel>
 
-                      return (
-                        <li key={item.text} className="list-none">
-                          <Field orientation="horizontal">
-                            <Checkbox
-                              id={`toggle-checkbox-${item.text.replace(/\s+/g, "-")}`}
-                              name="toggle-checkbox"
-                              className="bg-white"
-                              checked={visualStatus === "completed"}
-                              onCheckedChange={(checked) => {
-                                updateMemory(
-                                  item.text,
-                                  checked ? "completed" : "active",
-                                );
-                              }}
-                            />
-                            <FieldLabel
-                              htmlFor={`toggle-checkbox-${item.text.replace(/\s+/g, "-")}`}
-                              className={clsx(
-                                visualStatus === "active"
-                                  ? ""
-                                  : "text-muted-foreground",
-                              )}
-                            >
-                              {item.text}
-                            </FieldLabel>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant={"ghost"}
+                                size={"icon"}
+                                className="hover:bg-white/20 aria-expanded:bg-white/20"
+                              >
+                                <EllipsisIcon />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuGroup>
+                                <DropdownMenuItem disabled>
+                                  <SquarePenIcon className="mr-2" />
+                                  Edit (soon)
+                                </DropdownMenuItem>
 
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant={"ghost"}
-                                  size={"icon"}
-                                  className="hover:bg-white/20 aria-expanded:bg-white/20"
+                                <DropdownMenuItem
+                                  onClick={() => deleteMemory(item.id)}
                                 >
-                                  <EllipsisIcon />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem
-                                    onClick={() => deleteMemory(item.text)}
-                                  >
-                                    <SquarePenIcon className="mr-2" />
-                                    Edit
-                                  </DropdownMenuItem>
-
-                                  <DropdownMenuItem
-                                    onClick={() => deleteMemory(item.text)}
-                                  >
-                                    <TrashIcon className="mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </Field>
-                        </li>
-                      );
-                    })}
+                                  <TrashIcon className="mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </Field>
+                      </li>
+                    );
+                  })}
                 </div>
               </ScrollArea>
               <div className="shrink-0 p-4">
