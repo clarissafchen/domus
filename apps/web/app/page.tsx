@@ -17,10 +17,13 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Textarea } from "@/components/ui/textarea";
+import clsx from "clsx";
 
 import {
   AudioLinesIcon,
   EllipsisIcon,
+  PanelRightClose,
+  PanelRightOpen,
   PlusIcon,
   SendHorizonalIcon,
   TrashIcon,
@@ -35,10 +38,9 @@ export type MessageType = {
 };
 
 export default function Home() {
+  const [showSidebar, setShowSidebar] = useState<boolean>(true);
   const [items, setItems] = useState<string[]>([]);
-
   const [input, setInput] = useState("");
-
   const [messages, setMessages] = useState<MessageType[]>([
     {
       role: "assistant",
@@ -163,7 +165,7 @@ export default function Home() {
   return (
     <div className="bg-muted flex h-[100dvh] flex-col items-center justify-center py-8">
       <main className="flex w-full max-w-6xl flex-1 flex-col overflow-hidden">
-        <div className="flex">
+        <div className="flex items-center justify-between">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -183,11 +185,28 @@ export default function Home() {
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <div className="flex items-center">
+            <Button
+              variant={"secondary"}
+              size={"icon"}
+              className="size-7"
+              onClick={() => setShowSidebar(!showSidebar)}
+            >
+              {showSidebar ? <PanelRightClose /> : <PanelRightOpen />}
+            </Button>
+          </div>
         </div>
 
-        <div className="mt-6 flex flex-1 min-h-0">
-          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-l-md border bg-white">
-            <ScrollArea className="flex-1 min-h-0 w-full">
+        <div className="mt-6 flex min-h-0 flex-1 w-full overflow-hidden">
+          {/* Main Chat Panel */}
+          <div
+            className={clsx(
+              "flex flex-col overflow-hidden border bg-white transition-all duration-300 ease-in-out",
+              showSidebar ? "w-1/2 rounded-l-md" : "w-full rounded-md"
+            )}
+          >
+            <ScrollArea className="min-h-0 w-full flex-1">
               <div className="space-y-6 p-4">
                 {messages.map((message, index) => (
                   <Message key={index} message={message} />
@@ -236,142 +255,61 @@ export default function Home() {
             </form>
           </div>
 
-          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-r-md border-t border-r border-b bg-white/40">
-            <ScrollArea className="flex-1 min-h-0 w-full">
-              <div className="space-y-4 p-4">
-                {items.map((item, i) => (
-                  <li key={i} className="list-none">
-                    <Field orientation="horizontal">
-                      <Checkbox
-                        id={`toggle-checkbox-${i}`}
-                        name="toggle-checkbox"
-                        className="bg-white"
-                      />
-                      <FieldLabel htmlFor={`toggle-checkbox-${i}`}>
-                        {item}
-                      </FieldLabel>
+          {/* Sidebar Panel */}
+          <div
+            className={clsx(
+              "flex flex-col overflow-hidden bg-white/40 transition-all duration-300 ease-in-out",
+              showSidebar
+                ? "w-1/2 rounded-r-md border-t border-r border-b opacity-100"
+                : "w-0 border-none opacity-0"
+            )}
+          >
+            {/* Fixed-width inner wrapper to prevent text reflow during transition */}
+            <div className="flex h-full w-[575px] flex-col">
+              <ScrollArea className="min-h-0 w-full flex-1">
+                <div className="space-y-4 p-4">
+                  {items.map((item, i) => (
+                    <li key={i} className="list-none">
+                      <Field orientation="horizontal">
+                        <Checkbox
+                          id={`toggle-checkbox-${i}`}
+                          name="toggle-checkbox"
+                          className="bg-white"
+                        />
+                        <FieldLabel htmlFor={`toggle-checkbox-${i}`}>
+                          {item}
+                        </FieldLabel>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant={"ghost"} size={"icon"}>
-                            <EllipsisIcon />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem onClick={() => deleteMemory(item)}>
-                              <TrashIcon className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </Field>
-                  </li>
-                ))}
-              </div>
-            </ScrollArea>
-            <div className="shrink-0 p-4">
-              <div className="flex flex-row-reverse">
-                <Button variant={"secondary"}>Show Completed</Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant={"ghost"} size={"icon"}>
+                              <EllipsisIcon />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                onClick={() => deleteMemory(item)}
+                              >
+                                <TrashIcon className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </Field>
+                    </li>
+                  ))}
+                </div>
+              </ScrollArea>
+              <div className="shrink-0 p-4">
+                <div className="flex flex-row-reverse">
+                  <Button variant={"secondary"}>Show Completed</Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-
-
-        {/* <div className="mt-6 flex flex-1 columns-2">
-          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-l-md border bg-white">
-            <ScrollArea className="min-h-0 w-full flex-1 gap-5 p-4">
-              <div className="space-y-6">
-                {messages.map((message, index) => (
-                  <Message key={index} message={message} />
-                ))}
-              </div>
-            </ScrollArea>
-
-            <form
-              className="grid w-full shrink-0 gap-2 p-4"
-              onSubmit={handleSubmit}
-            >
-              <Textarea
-                placeholder="What do I need to know?"
-                className="bg-muted rounded-md border-none shadow-none"
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                value={input}
-              />
-
-              <div className="flex justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      className="rounded-md"
-                      size={"icon"}
-                      variant={"ghost"}
-                    >
-                      <PlusIcon />
-                    </Button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent side="top" align="start">
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        Add photos &amp; files
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Add from Drive</DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button type="submit" className="rounded-md" size={"icon"}>
-                  {input ? <SendHorizonalIcon /> : <AudioLinesIcon />}
-                </Button>
-              </div>
-            </form>
-          </div>
-
-          <div className="flex w-full flex-1 flex-col overflow-hidden rounded-r-md border-t border-r border-b bg-white/40">
-            <ScrollArea className="min-h-0 w-full flex-1 gap-5 p-4">
-              <div className="space-y-4">
-                {items.map((item, i) => (
-                  <li key={i}>
-                    <Field orientation="horizontal">
-                      <Checkbox
-                        id="toggle-checkbox"
-                        name="toggle-checkbox"
-                        className="bg-white"
-                      />
-                      <FieldLabel htmlFor="toggle-checkbox">{item}</FieldLabel>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant={"ghost"} size={"icon"}>
-                            <EllipsisIcon />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                              <TrashIcon />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </Field>
-                  </li>
-                ))}
-              </div>
-            </ScrollArea>
-            <div className="p-4">
-              <div className="flex flex-row-reverse">
-                <Button variant={"secondary"}>Completed</Button>
-              </div>
-            </div>
-          </div>
-        </div> */}
       </main>
     </div>
   );
