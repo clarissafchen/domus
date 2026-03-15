@@ -56,6 +56,7 @@ class MemoryItem(BaseModel):
     type: str = "note"
     subject: str = ""
     details: str = ""
+    scheduled_for: str = ""
     status: str = "active"
 >>>>>>> 443ba3b (updated agent entry logic)
 
