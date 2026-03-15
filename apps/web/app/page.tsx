@@ -248,9 +248,11 @@ export default function Home() {
         }}
       />
       <div className="z-20 flex h-[22px] w-full items-center justify-between border-b border-[#8e8e8e] bg-gradient-to-b from-[#f9f9f9] via-[#e2e2e2] to-[#c9c9c9] px-4 text-[13px] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] select-none">
-        <div className="flex cursor-default items-center space-x-4 [text-shadow:0_1px_0_rgba(255,255,255,0.7)]">
-          <div className="size-3 -translate-y-[1px] bg-black"></div>
-          <span className="font-bold tracking-wide">Domus</span>
+        <div className="flex cursor-default items-center [text-shadow:0_1px_0_rgba(255,255,255,0.7)]">
+          <div className="mr-2 size-3 -translate-y-[1px] bg-black"></div>
+          <span className="px-2 font-bold tracking-wide hover:bg-blue-500 hover:text-white hover:[text-shadow:none]">
+            Domus
+          </span>
 
           <ul className="flex gap-2">
             {menuItems.map((item) => (
@@ -264,15 +266,39 @@ export default function Home() {
           </ul>
         </div>
 
-        <div className="flex cursor-default items-center space-x-4 font-medium [text-shadow:0_1px_0_rgba(255,255,255,0.7)]">
+        <div className="flex cursor-default items-center space-x-2 font-medium [text-shadow:0_1px_0_rgba(255,255,255,0.7)]">
           <span>
             {time
               ? `${time.toLocaleDateString("en-US", { weekday: "short" })} ${time.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`
               : ""}
           </span>
-          <span className="hover:bg-blue-500 hover:text-white hover:[text-shadow:none]">
-            clarissa
-          </span>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="px-2 hover:bg-blue-500 hover:text-white hover:[text-shadow:none]">
+                clarissa
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                <DropdownMenuItem>
+                  <UserIcon className="mr-2" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings2Icon className="mr-2" />
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <LogOutIcon className="mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <div className="flex size-4 items-center justify-center rounded-full border border-blue-700 bg-blue-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
             <svg
@@ -315,32 +341,6 @@ export default function Home() {
                 >
                   {showSidebar ? <PanelRightClose /> : <PanelRightOpen />}
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant={"ghost"} size={"icon"}>
-                      <SettingsIcon />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem>
-                        <UserIcon className="mr-2" />
-                        Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Settings2Icon className="mr-2" />
-                        Settings
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                    <DropdownMenuGroup>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <LogOutIcon className="mr-2" />
-                        Logout
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </div>
 
