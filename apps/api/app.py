@@ -84,6 +84,12 @@ class ChatRequest(BaseModel):
     user_id: str = "clarissa"
     session_id: str = "domus-demo"
 
+@app.middleware("http")
+async def log_requests(request, call_next):
+    print("incoming", request.method, request.url)
+    response = await call_next(request)
+    return response
+
 
 # health check
 @app.get("/")

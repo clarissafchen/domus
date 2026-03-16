@@ -95,15 +95,9 @@ export default function Home() {
   const getMemory = useCallback(async () => {
     if (!user) return;
     try {
-      const token = await user.getIdToken();
-      const res = await fetch(`${API_URL}/memory`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const res = await fetch(`${API_URL}/memory`);
       const data = await res.json();
-
+      console.log({ data });
       setItems(data.items || []);
     } catch (err) {
       console.error("Failed to load memory: ", err);
@@ -160,23 +154,28 @@ export default function Home() {
     setInput("");
 
     try {
+      const formData = new FormData();
+      formData.append("message", payload);
+      formData.append("status", "active");
+      formData.append("user_id", user?.uid || "clarissa");
+      formData.append("session_id", "domus-demo");
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
+
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
 
-        body: JSON.stringify({
-          message: payload,
-          status: "active",
-          user_id: user?.uid || "clarissa",
-          session_id: "domus-demo",
-        }),
+        body: formData,
       });
 
       const data = await res.json();
+
+      console.log({ data });
 
       setMessages((prev) => [
         ...prev,
@@ -223,15 +222,24 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
 
-    if (!user) return;
-    
-    user.getIdToken().then(token => {
+    if (!user) {
+      console.log("USER NOT LOGGED IN!");
+      return;
+    }
+
+    user.getIdToken().then((token) => {
+      console.log({ token });
+
       fetch(`${API_URL}/memory`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
-        .then((res) => res.json())
+        .then((res) => {
+          console.log({ res });
+
+          return res.json();
+        })
         .then((data) => {
           if (isMounted) setItems(data.items || []);
         })
@@ -346,7 +354,6 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <BirdhouseIcon className="size-[20px]" />
                 <label className="text-lg font-bold">My Family</label>
-                <label>{user?.displayName}</label>
               </div>
 
               <div className="flex items-center gap-1">
