@@ -294,9 +294,5 @@ def chat(
         print("CHAT ERROR:", repr(e))
         final_text = f"Domus error: {str(e)}"
 
-<<<<<<< HEAD:apps/api/app.py
-    return {"reply": final_text}
-=======
     print("FINAL TEXT:", final_text)
     return {"reply": final_text}
->>>>>>> 7273eda (Improve Domus chat UI, assistant bubble layout, avatar, image attachments, and backend fixes):backend/app.py
