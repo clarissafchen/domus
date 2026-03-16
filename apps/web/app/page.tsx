@@ -38,7 +38,8 @@ import {
   UserIcon,
 } from "lucide-react";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 
 export type MessageType = {
   role: "user" | "assistant";
@@ -47,8 +48,6 @@ export type MessageType = {
 };
 
 export default function Home() {
-  const [showSidebar, setShowSidebar] = useState<boolean>(true);
-  const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [items, setItems] = useState<
     { id: string; text: string; status: "active" | "completed" }[]
   >([]);
@@ -59,6 +58,10 @@ export default function Home() {
       text: "Hi, I'm Domus. Ask me about your household tasks or tell me something to remember.",
     },
   ]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSidebar, setShowSidebar] = useState<boolean>(true);
+  const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [time, setTime] = useState<Date | null>(null);
 
   useEffect(() => {
