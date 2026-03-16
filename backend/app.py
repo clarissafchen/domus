@@ -1,6 +1,7 @@
 # imports
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
 import firebase_admin
@@ -208,31 +209,52 @@ def get_briefing():
 
 # ADK agent chat endpoint
 @app.post("/chat")
-def chat(request: ChatRequest):
+async def chat(
+    message: str = Form(""),
+    user_id: str = Form("clarissa"),
+    session_id: str = Form("domus-demo"),
+    image: UploadFile | None = File(None),
+):
     existing_session = session_service.get_session_sync(
         app_name=APP_NAME,
-        user_id=request.user_id,
-        session_id=request.session_id,
+        user_id=user_id,
+        session_id=session_id,
     )
 
     if existing_session is None:
         session_service.create_session_sync(
             app_name=APP_NAME,
-            user_id=request.user_id,
-            session_id=request.session_id,
+            user_id=user_id,
+            session_id=session_id,
+        )
+
+    parts = []
+
+    if message:
+        parts.append(types.Part(text=message))
+
+    if image is not None:
+        image_bytes = await image.read()
+        parts.append(
+            types.Part(
+                inline_data=types.Blob(
+                    mime_type=image.content_type,
+                    data=image_bytes,
+                )
+            )
         )
 
     user_message = types.Content(
         role="user",
-        parts=[types.Part(text=request.message)],
+        parts=parts,
     )
 
     final_text = "Domus did not return a response."
 
     try:
         events = runner.run(
-            user_id=request.user_id,
-            session_id=request.session_id,
+            user_id=user_id,
+            session_id=session_id,
             new_message=user_message,
         )
 

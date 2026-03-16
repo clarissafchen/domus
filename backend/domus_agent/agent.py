@@ -126,7 +126,8 @@ def update_household_memory(
     id: str,
     text: str = "",
     details: str = "",
-    status: str = ""
+    scheduled_for: str = "",
+    status: str = "",
 ):
     """
     Update a household memory item.
@@ -145,20 +146,40 @@ def update_household_memory(
     This tool updates by stable memory ID, not by text.
     The agent should call get_household_memory first, identify the matching item,
     and then pass that item's `id` into this tool.
-    When using this tool, you sould:
+    When using this tool, you should:
     1. look at current memory / recent context
     2. find the target item by id
-    3. update item by id
+    3. update the item by id
     4. ask clarification questions if ambiguous
 
     Example:
     User: "Return book to library tomorrow"
     User: "Actually, make that Friday"
-    Domus: 
-    - Finds the last relevant item by id
-    - Updates scheduled_for
-    - Confirms the change
+    Domus:
+    - finds the last relevant item by id
+    - updates scheduled_for
+    - confirms the change
     """
+
+    payload = {"id": id}
+
+    if text:
+        payload["text"] = text
+    if details:
+        payload["details"] = details
+    if scheduled_for:
+        payload["scheduled_for"] = scheduled_for
+    if status:
+        payload["status"] = status
+
+    res = requests.put(
+        "http://127.0.0.1:8000/memory",
+        json=payload,
+    )
+
+    res.raise_for_status()
+
+    return {"status": "memory updated", **payload}
 
 # -----------------------------
 # Domus Agent
@@ -171,11 +192,12 @@ root_agent = Agent(
     instruction="""
 You are Domus, a helpful household assistant that maintains a shared family memory list.
 
-You have four tools:
+You have five tools:
 - get_current_datetime
 - get_household_memory
 - add_household_memory
 - delete_household_memory
+- update_household_memory
 
 Your job is to help a household stay organized by remembering tasks, reminders, appointments, and notes.
 
@@ -198,6 +220,13 @@ Steps:
 3. Convert to ISO datetime
 4. Store in scheduled_for
 
+------------
+IMAGE HANDLING
+------------
+If the user uploads an image such as a screenshot of a text message, appointment card, note, or list, extract any actionable household reminders, tasks, appointments, or grocery items from the image and store them using add_household_memory.
+If the image does not contain a clear actionable household memory item, ask a short clarification question instead of guessing.
+If an image contains multiple possible reminders, store only the clearest one or ask the user which one to save.
+
 -----------------------------
 TOOL USAGE RULES
 -----------------------------
@@ -214,9 +243,14 @@ TOOL USAGE RULES
    - then call delete_household_memory using that item's id
    - if multiple items could match, ask a short clarification question instead of guessing
 
-5. When displaying the household list, always format items as a bullet list.
+5. If the user says things like "actually", "change that", "make that", "move it", or "add a note":
+   - use recent conversation context and get_household_memory to identify the target item
+   - call update_household_memory using that item's id
+   - if the target item is ambiguous, ask a short clarification question instead of guessing
 
-6. When the user says "What do I need to know?", call get_household_memory and summarize the most important items.
+6. When displaying the household list, always format items as a bullet list.
+
+7. When the user says "What do I need to know?", call get_household_memory and summarize the most important items.
 
 -----------------------------
 STRUCTURED MEMORY
@@ -272,11 +306,12 @@ Steps:
 3. Read its id
 4. Call delete_household_memory with that id
 
-Rules:
-- scheduled_for must contain the resolved datetime, not the original phrase.
-- details must only contain notes or context, never time phrases.
-- Do not duplicate time information in both fields.
-- If no time is provided, leave scheduled_for empty.
+User: "Actually, make that Friday"
+Steps:
+1. Use recent conversation context to determine which item "that" refers to
+2. Call get_current_datetime if needed to resolve "Friday"
+3. Call get_household_memory to confirm the matching item
+4. Call update_household_memory with that item's id and the new scheduled_for value
 -----------------------------
 RESPONSE STYLE
 -----------------------------
@@ -316,6 +351,7 @@ If there are no household items, say:
         get_current_datetime,
         get_household_memory,
         add_household_memory,
-        delete_household_memory
+        delete_household_memory,
+        update_household_memory,
     ],
 )
