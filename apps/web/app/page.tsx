@@ -292,7 +292,8 @@ export default function Home() {
     };
   }, [user]);
 
-  const menuItems = ["File", "Edit", "View", "Go", "Window", "Help"];
+  // const menuItems = ["File", "Edit", "View", "Go", "Window", "Help"];
+  const menuItems = ["File", "Edit", "View", "Help"];
 
   if (!user) {
     return null;
@@ -310,10 +311,14 @@ export default function Home() {
         }}
       />
 
-      <div className="z-20 flex h-[22px] w-full items-center justify-between border-b border-[#8e8e8e] bg-gradient-to-b from-[#f9f9f9] via-[#e2e2e2] to-[#c9c9c9] px-4 text-[13px] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] select-none">
-        <div className="flex cursor-default items-center [text-shadow:0_1px_0_rgba(255,255,255,0.7)]">
-          <div className="mr-2 size-3 -translate-y-[1px] bg-black"></div>
-          <span className="px-2 font-bold tracking-wide hover:bg-blue-500 hover:text-white hover:[text-shadow:none]">
+      {/* <div className="z-20 flex h-[22px] w-full items-center justify-between border-b border-[#8e8e8e] bg-gradient-to-b from-[#f9f9f9] via-[#e2e2e2] to-[#c9c9c9] px-4 text-[13px] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] select-none"> */}
+      <div className="z-20 flex h-[30px] w-full items-center justify-between border-b bg-white/40 px-4 text-sm text-black backdrop-blur select-none">
+        <div className="flex cursor-default items-center gap-2 [text-shadow:0_1px_0_rgba(255,255,255,0.7)]">
+          {/* <div className="mr-2 size-3 -translate-y-[1px] bg-black"></div> */}
+          <span
+            className="hover:bg-muted rounded px-2 py-0.5 font-bold tracking-wide"
+            // className="px-2 font-bold tracking-wide hover:bg-blue-500 hover:text-white hover:[text-shadow:none]"
+          >
             Domus
           </span>
 
@@ -321,7 +326,8 @@ export default function Home() {
             {menuItems.map((item) => (
               <li
                 key={item}
-                className="px-1.5 font-medium hover:bg-blue-500 hover:text-white hover:[text-shadow:none]"
+                // className="px-1.5 font-medium hover:bg-blue-500 hover:text-white hover:[text-shadow:none]"
+                className="hover:bg-muted rounded px-2 py-0.5"
               >
                 {item}
               </li>
@@ -338,13 +344,16 @@ export default function Home() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="px-2 hover:bg-blue-500 hover:text-white hover:[text-shadow:none]">
+              <button
+                // className="px-2 hover:bg-blue-500 hover:text-white hover:[text-shadow:none]"
+                className="hover:bg-muted rounded px-2 py-0.5 font-bold font-medium tracking-wide"
+              >
                 {user
                   ? user.displayName?.split(" ")[0] || user.email
                   : "Not logged in"}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" sideOffset={8}>
               <DropdownMenuGroup>
                 <DropdownMenuItem>
                   <UserIcon className="mr-2" />
@@ -365,7 +374,7 @@ export default function Home() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="flex size-4 items-center justify-center rounded-full border border-blue-700 bg-blue-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
+          {/* <div className="flex size-4 items-center justify-center rounded-full border border-blue-700 bg-blue-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
             <svg
               className="h-2.5 w-2.5 text-white"
               fill="none"
@@ -379,17 +388,17 @@ export default function Home() {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               ></path>
             </svg>
-          </div>
+          </div> */}
         </div>
       </div>
 
       <div className="z-10 flex w-full max-w-6xl flex-1 flex-col overflow-hidden py-8">
-        <div className="flex min-h-0 w-full flex-1 overflow-hidden shadow">
+        <div className="flex min-h-0 w-full flex-1 overflow-hidden rounded-md border shadow">
           {/* Main Chat Panel */}
           <div
             className={clsx(
-              "flex flex-col overflow-hidden border bg-white transition-all duration-300 ease-in-out",
-              showSidebar ? "w-1/2 rounded-l-md" : "w-full rounded-md",
+              "flex flex-col overflow-hidden bg-white transition-all duration-300 ease-in-out",
+              showSidebar ? "w-1/2 border-r" : "w-full border-transparent",
             )}
           >
             <div className="flex items-center justify-between border-b px-4 py-2">
@@ -507,9 +516,7 @@ export default function Home() {
           <div
             className={clsx(
               "flex flex-col overflow-hidden bg-white/40 backdrop-blur-lg transition-all duration-300 ease-in-out",
-              showSidebar
-                ? "w-1/2 rounded-r-md border-t border-r border-b opacity-100"
-                : "w-0 border-none opacity-0",
+              showSidebar ? "w-1/2 opacity-100" : "w-0 opacity-0",
             )}
           >
             {/* Fixed-width inner wrapper to prevent text reflow during transition */}
