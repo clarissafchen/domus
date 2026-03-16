@@ -1,11 +1,12 @@
 # imports
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
 
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -28,6 +29,19 @@ runner = Runner(
     app_name=APP_NAME,
     session_service=session_service,
 )
+
+security = HTTPBearer()
+
+def verify_firebase_token(creds: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        decoded_token = auth.verify_id_token(creds.credentials)
+        return decoded_token
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid authentication token: {e}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 # FastAPI app
 app = FastAPI()
@@ -79,7 +93,7 @@ def health():
 
 # get all household memory items
 @app.get("/memory")
-def get_memory():
+def get_memory(user_data: dict = Depends(verify_firebase_token)):
     docs = db.collection("memory").order_by("text").stream()
 
     items = []
@@ -100,14 +114,14 @@ def get_memory():
 
 # add new memory item
 @app.post("/memory")
-def add_memory(item: MemoryItem):
+def add_memory(item: MemoryItem, user_data: dict = Depends(verify_firebase_token)):
     doc_ref = db.collection("memory").add(item.dict())[1]
     return {"status": "memory stored", "item": {"id": doc_ref.id, **item.dict()}}
 
 
 # delete memory item
 @app.delete("/memory")
-def delete_memory(item: MemoryDeleteRequest):
+def delete_memory(item: MemoryDeleteRequest, user_data: dict = Depends(verify_firebase_token)):
     doc_ref = db.collection("memory").document(item.id)
     snapshot = doc_ref.get()
 
@@ -129,7 +143,7 @@ def delete_memory(item: MemoryDeleteRequest):
 
 # update memory item
 @app.put("/memory")
-def update_memory(item: MemoryUpdateRequest):
+def update_memory(item: MemoryUpdateRequest, user_data: dict = Depends(verify_firebase_token)):
     doc_ref = db.collection("memory").document(item.id)
     snapshot = doc_ref.get()
 
@@ -182,7 +196,7 @@ def update_memory(item: MemoryUpdateRequest):
 
 # optional simple backend-generated briefing
 @app.get("/briefing")
-def get_briefing():
+def get_briefing(user_data: dict = Depends(verify_firebase_token)):
     docs = db.collection("memory").order_by("text").stream()
 
     items = []
@@ -214,6 +228,7 @@ async def chat(
     user_id: str = Form("clarissa"),
     session_id: str = Form("domus-demo"),
     image: UploadFile | None = File(None),
+    user_data: dict = Depends(verify_firebase_token),
 ):
     existing_session = session_service.get_session_sync(
         app_name=APP_NAME,

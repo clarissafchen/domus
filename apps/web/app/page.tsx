@@ -93,8 +93,14 @@ export default function Home() {
   const API_URL = "http://127.0.0.1:8000";
 
   const getMemory = useCallback(async () => {
+    if (!user) return;
     try {
-      const res = await fetch(`${API_URL}/memory`);
+      const token = await user.getIdToken();
+      const res = await fetch(`${API_URL}/memory`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
@@ -102,13 +108,16 @@ export default function Home() {
     } catch (err) {
       console.error("Failed to load memory: ", err);
     }
-  }, []);
+  }, [user]);
 
   const deleteMemory = async (id: string) => {
+    if (!user) return;
+    const token = await user.getIdToken();
     await fetch(`${API_URL}/memory`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ id }),
     });
@@ -117,11 +126,14 @@ export default function Home() {
   };
 
   const updateMemory = async (id: string, status: "active" | "completed") => {
+    if (!user) return;
+    const token = await user.getIdToken();
     try {
       await fetch(`${API_URL}/memory`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ id, status }),
       });
@@ -134,6 +146,8 @@ export default function Home() {
   };
 
   const createMemory = async (text: string) => {
+    if (!user) return;
+    const token = await user.getIdToken();
     const payload = text.trim();
 
     console.log({ payload });
@@ -151,6 +165,7 @@ export default function Home() {
 
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
 
         body: JSON.stringify({
@@ -208,19 +223,25 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
 
-    fetch(`${API_URL}/memory`)
-      .then((res) => res.json())
-
-      .then((data) => {
-        if (isMounted) setItems(data.items || []);
+    if (!user) return;
+    
+    user.getIdToken().then(token => {
+      fetch(`${API_URL}/memory`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       })
-
-      .catch((err) => console.error("Memory fetch failed:", err));
+        .then((res) => res.json())
+        .then((data) => {
+          if (isMounted) setItems(data.items || []);
+        })
+        .catch((err) => console.error("Memory fetch failed:", err));
+    });
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user]);
 
   const menuItems = ["File", "Edit", "View", "Go", "Window", "Help"];
 
