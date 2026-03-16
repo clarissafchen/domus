@@ -30,18 +30,16 @@ runner = Runner(
     session_service=session_service,
 )
 
-security = HTTPBearer()
+# TEMP: Hackathon demo mode
+# Skips Firebase verification so local agent tool calls can access /memory
+security = HTTPBearer(auto_error=False)
 
-def verify_firebase_token(creds: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        decoded_token = auth.verify_id_token(creds.credentials)
-        return decoded_token
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid authentication token: {e}",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+def verify_firebase_token(
+    creds: HTTPAuthorizationCredentials | None = Depends(security),
+):
+    print("AUTH BYPASS ACTIVE")
+    return {"uid": "demo-user"}
+
 
 # FastAPI app
 app = FastAPI()
