@@ -39,7 +39,9 @@ import {
 } from "lucide-react";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
+import { useAuth } from "@/contexts/AuthContext";
+import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
 
 export type MessageType = {
   role: "user" | "assistant";
@@ -48,6 +50,15 @@ export type MessageType = {
 };
 
 export default function Home() {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user, router]);
+
   const [items, setItems] = useState<
     { id: string; text: string; status: "active" | "completed" }[]
   >([]);
@@ -145,7 +156,7 @@ export default function Home() {
         body: JSON.stringify({
           message: payload,
           status: "active",
-          user_id: "clarissa",
+          user_id: user?.uid || "clarissa",
           session_id: "domus-demo",
         }),
       });
@@ -213,6 +224,10 @@ export default function Home() {
 
   const menuItems = ["File", "Edit", "View", "Go", "Window", "Help"];
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <div className="relative flex h-[100dvh] flex-col items-center justify-center">
       <div
@@ -253,7 +268,9 @@ export default function Home() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="px-2 hover:bg-blue-500 hover:text-white hover:[text-shadow:none]">
-                clarissa
+                {user
+                  ? user.displayName?.split(" ")[0] || user.email
+                  : "Not logged in"}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -269,7 +286,7 @@ export default function Home() {
               </DropdownMenuGroup>
               <DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => auth.signOut()}>
                   <LogOutIcon className="mr-2" />
                   Logout
                 </DropdownMenuItem>
@@ -308,6 +325,7 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <BirdhouseIcon className="size-[20px]" />
                 <label className="text-lg font-bold">My Family</label>
+                <label>{user?.displayName}</label>
               </div>
 
               <div className="flex items-center gap-1">
@@ -402,63 +420,63 @@ export default function Home() {
                         return 1;
                       return 0;
                     })
-                  .map((item) => {
-                    return (
-                      <li key={item.id} className="list-none">
-                        <Field orientation="horizontal">
-                          <Checkbox
-                            id={`toggle-checkbox-${item.id}`}
-                            name="toggle-checkbox"
-                            className="bg-white"
-                            checked={item.status === "completed"}
-                            onCheckedChange={(checked) => {
-                              updateMemory(
-                                item.id,
-                                checked === true ? "completed" : "active",
-                              );
-                            }}
-                          />
-                          <FieldLabel
-                            htmlFor={`toggle-checkbox-${item.id}`}
-                            className={clsx(
-                              item.status === "active"
-                                ? ""
-                                : "text-muted-foreground",
-                            )}
-                          >
-                            {item.text}
-                          </FieldLabel>
+                    .map((item) => {
+                      return (
+                        <li key={item.id} className="list-none">
+                          <Field orientation="horizontal">
+                            <Checkbox
+                              id={`toggle-checkbox-${item.id}`}
+                              name="toggle-checkbox"
+                              className="bg-white"
+                              checked={item.status === "completed"}
+                              onCheckedChange={(checked) => {
+                                updateMemory(
+                                  item.id,
+                                  checked === true ? "completed" : "active",
+                                );
+                              }}
+                            />
+                            <FieldLabel
+                              htmlFor={`toggle-checkbox-${item.id}`}
+                              className={clsx(
+                                item.status === "active"
+                                  ? ""
+                                  : "text-muted-foreground",
+                              )}
+                            >
+                              {item.text}
+                            </FieldLabel>
 
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant={"ghost"}
-                                size={"icon"}
-                                className="hover:bg-white/20 aria-expanded:bg-white/20"
-                              >
-                                <EllipsisIcon />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuGroup>
-                                <DropdownMenuItem disabled>
-                                  <SquarePenIcon className="mr-2" />
-                                  Edit (soon)
-                                </DropdownMenuItem>
-
-                                <DropdownMenuItem
-                                  onClick={() => deleteMemory(item.id)}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant={"ghost"}
+                                  size={"icon"}
+                                  className="hover:bg-white/20 aria-expanded:bg-white/20"
                                 >
-                                  <TrashIcon className="mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </Field>
-                      </li>
-                    );
-                  })}
+                                  <EllipsisIcon />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem disabled>
+                                    <SquarePenIcon className="mr-2" />
+                                    Edit (soon)
+                                  </DropdownMenuItem>
+
+                                  <DropdownMenuItem
+                                    onClick={() => deleteMemory(item.id)}
+                                  >
+                                    <TrashIcon className="mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </Field>
+                        </li>
+                      );
+                    })}
                 </div>
               </ScrollArea>
               <div className="shrink-0 p-4">
