@@ -35,6 +35,7 @@ import {
   SquarePenIcon,
   TrashIcon,
   UserIcon,
+  XIcon,
 } from "lucide-react";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -443,13 +444,13 @@ export default function Home() {
                 value={input}
               />
               {selectedFile && (
-                <div className="flex items-center justify-between gap-2 text-sm">
+                <div className="flex items-center justify-between gap-2 py-2 text-sm">
                   <p className="text-muted-foreground truncate">
                     Attached: {selectedFile.name}
                   </p>
-                  <button
-                    type="button"
-                    className="text-blue-700 hover:underline"
+                  <Button
+                    variant={"ghost"}
+                    size={"icon-xs"}
                     onClick={() => {
                       setSelectedFile(null);
                       if (fileInputRef.current) {
@@ -457,8 +458,8 @@ export default function Home() {
                       }
                     }}
                   >
-                    Remove
-                  </button>
+                    <XIcon className="size-4" />
+                  </Button>
                 </div>
               )}
 
