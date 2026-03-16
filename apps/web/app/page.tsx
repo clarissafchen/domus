@@ -41,6 +41,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
+import { Water } from "@paper-design/shaders-react";
 
 export type MessageType = {
   role: "user" | "assistant";
@@ -301,12 +302,13 @@ export default function Home() {
       <div
         className="pointer-events-none absolute inset-0 z-0"
         style={{
-          backgroundImage: "url('/10-4.png')",
+          backgroundImage: "url('/wallpaper/flowers.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: 1,
+          opacity: 0.25,
         }}
       />
+
       <div className="z-20 flex h-[22px] w-full items-center justify-between border-b border-[#8e8e8e] bg-gradient-to-b from-[#f9f9f9] via-[#e2e2e2] to-[#c9c9c9] px-4 text-[13px] text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] select-none">
         <div className="flex cursor-default items-center [text-shadow:0_1px_0_rgba(255,255,255,0.7)]">
           <div className="mr-2 size-3 -translate-y-[1px] bg-black"></div>
@@ -381,7 +383,7 @@ export default function Home() {
       </div>
 
       <div className="z-10 flex w-full max-w-6xl flex-1 flex-col overflow-hidden py-8">
-        <div className="flex min-h-0 w-full flex-1 overflow-hidden">
+        <div className="flex min-h-0 w-full flex-1 overflow-hidden shadow">
           {/* Main Chat Panel */}
           <div
             className={clsx(
