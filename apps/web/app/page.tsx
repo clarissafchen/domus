@@ -160,29 +160,18 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append("message", payload);
-<<<<<<< HEAD
       formData.append("status", "active");
       formData.append("user_id", user?.uid || "clarissa");
       formData.append("session_id", "domus-demo");
-=======
-      formData.append("user_id", "clarissa");
-      formData.append("session_id", "domus-demo");
-
->>>>>>> 7273eda (Improve Domus chat UI, assistant bubble layout, avatar, image attachments, and backend fixes)
       if (selectedFile) {
         formData.append("image", selectedFile);
       }
 
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
-<<<<<<< HEAD
-
         headers: {
           Authorization: `Bearer ${token}`,
         },
-
-=======
->>>>>>> 7273eda (Improve Domus chat UI, assistant bubble layout, avatar, image attachments, and backend fixes)
         body: formData,
       });
 
