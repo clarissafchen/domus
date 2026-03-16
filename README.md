@@ -1,159 +1,222 @@
-# Turborepo starter
+# Domus
 
-This Turborepo starter is maintained by the Turborepo core team.
+Domus is a multimodal household memory assistant that captures, organizes, and retrieves shared household information through chat and images.
 
-## Using this example
+Users can add reminders, notes, tasks, and events through chat or screenshots. Domus converts these inputs into structured memory items that can be retrieved, updated, or deleted later.
 
-Run the following command:
+This project was built using Google AI models and Google Cloud services as part of a hackathon project submission.
 
-```sh
-npx create-turbo@latest
+---
+
+# Architecture Overview
+
+Domus is composed of three primary layers:
+
+User → Next.js Frontend → FastAPI Backend → Gemini Agent → Firestore
+
+The system interprets chat requests, converts them into structured memory operations, and persists them in a shared household memory store.
+
+---
+
+# Repository Structure
+
+```
+domus
+│
+├─ apps
+│  ├─ api
+│  │  ├─ app.py
+│  │  └─ domus_agent
+│  │     └─ agent.py
+│  │
+│  └─ web
+│     └─ app
+│        └─ page.tsx
+│
+├─ package.json
+└─ bun.lock
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+# Core Components
 
-### Apps and Packages
+## Frontend (Next.js)
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+Location:
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```
+apps/web
 ```
 
-Without global `turbo`, use your package manager:
+Responsibilities:
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+- Chat interface
+- Image upload and clipboard paste support
+- Display assistant responses
+- Show household memory list
+- Manage authentication state
+- Send requests to backend API
+
+Technologies:
+
+- Next.js
+- React
+- Bun
+- Firebase Web SDK
+
+---
+
+## Backend API (FastAPI)
+
+Location:
+
+```
+apps/api/app.py
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Responsibilities:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+- Expose REST endpoints
+- Receive multimodal chat requests
+- Invoke Gemini agent
+- Manage Firestore memory storage
 
-```sh
-turbo build --filter=docs
+Key endpoints:
+
+| Endpoint | Purpose |
+|--------|--------|
+| GET / | Health check |
+| POST /chat | Multimodal chat interface |
+| GET /memory | Retrieve memory items |
+| POST /memory | Create memory |
+| PUT /memory | Update memory |
+| DELETE /memory | Delete memory |
+| GET /briefing | Generate summary |
+
+---
+
+## Agent Layer
+
+Location:
+
+```
+apps/api/domus_agent/agent.py
 ```
 
-Without global `turbo`:
+The conversational agent is implemented using the Google Agent Development Kit (ADK).
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+Model used:
+
+```
+Gemini 2.5 Flash
 ```
 
-### Develop
+The agent interprets user messages and decides when to call system tools.
 
-To develop all apps and packages, run the following command:
+Available tools:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+- get_current_datetime
+- get_household_memory
+- add_household_memory
+- update_household_memory
+- delete_household_memory
 
-```sh
-cd my-turborepo
-turbo dev
+---
+
+# Multimodal Processing
+
+Domus supports both text and image input.
+
+Users can:
+
+- upload images
+- paste screenshots directly into chat
+
+Images are converted into Gemini-compatible inline data before being sent to the model.
+
+This allows Domus to extract structured information from screenshots such as reminders, lists, or tickets.
+
+---
+
+# Memory Data Model
+
+Household memory is stored as structured objects in Firestore.
+
+Example schema:
+
+```
+{
+  "text": "Launch project",
+  "type": "task",
+  "subject": "project",
+  "scheduled_for": "2026-03-16T18:00",
+  "status": "active"
+}
 ```
 
-Without global `turbo`, use your package manager:
+Fields include:
 
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+- id
+- text
+- type
+- subject
+- details
+- scheduled_for
+- status
+
+---
+
+# Authentication
+
+Authentication is handled through Firebase Auth.
+
+The frontend obtains a Firebase ID token after login and sends it with API requests.
+
+During hackathon development the backend temporarily bypasses Firebase verification to allow internal agent tool calls to access the memory API without authorization errors.
+
+---
+
+# Development
+
+Start the frontend:
+
+```
+cd apps/web
+bun run dev
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+Start the backend:
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
+```
+cd apps/api
+uvicorn app:app --reload
 ```
 
-Without global `turbo`:
+Frontend:
 
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+```
+http://localhost:3000
 ```
 
-### Remote Caching
+Backend:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
+```
+http://localhost:8000
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
+# Key Capabilities
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+- Conversational household memory
+- Multimodal screenshot understanding
+- Structured memory storage
+- Tool-driven AI agent
+- Firestore-backed persistence
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+# Hackathon Note
 
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+This project and accompanying content were created for the purposes of entering a Google Cloud AI hackathon. The system demonstrates how Gemini models and Google Cloud infrastructure can be used to build a multimodal assistant for managing shared household information.
