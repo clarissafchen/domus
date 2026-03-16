@@ -222,6 +222,42 @@ export default function Home() {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        const extension =
+          file.type === "image/jpeg"
+            ? "jpg"
+            : file.type === "image/png"
+              ? "png"
+              : file.type === "image/webp"
+                ? "webp"
+                : "img";
+
+        const pastedFile = new File(
+          [file],
+          `pasted-image-${Date.now()}.${extension}`,
+          { type: file.type || "image/png" },
+        );
+
+        setSelectedFile(pastedFile);
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+
+        e.preventDefault();
+        return;
+      }
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -401,6 +437,7 @@ export default function Home() {
                 className="bg-muted rounded-md border-none shadow-none"
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 value={input}
               />
               {selectedFile && (
