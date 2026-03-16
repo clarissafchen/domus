@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./apps/api/.env
+    # Optional: mount the firebase key if it's not checked into the repository or if you want to swap it out
+    # volumes:
+    #   - ./apps/api/firebase_key.json:/app/firebase_key.json:ro

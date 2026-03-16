@@ -1,0 +1,15 @@
+# Ignore virtual environment and cache files
+.venv
+__pycache__
+*.pyc
+.pytest_cache/
+.coverage
+
+# Ignore environment variables
+.env
+.env.local
+
+# Ignore git and turbo
+.git
+.turbo
+node_modules
