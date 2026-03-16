@@ -1,0 +1,8 @@
+{
+  "name": "domus-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "uv run python -m uvicorn app:app --reload --port 8000"
+  }
+}
