@@ -4,7 +4,7 @@ Domus is a multimodal household memory assistant that captures, organizes, and r
 
 Users can add reminders, notes, tasks, and events through chat or screenshots. Domus converts these inputs into structured memory items that can be retrieved, updated, or deleted later.
 
-This project was built using Google AI models and Google Cloud services as part of a hackathon project submission.
+This project was built using Gemini models, Google ADK, and Google Cloud services as part of a hackathon project submission.
 
 ---
 
