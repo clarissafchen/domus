@@ -22,7 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 import clsx from "clsx";
 
 import {
-  AudioLinesIcon,
   BirdhouseIcon,
   EllipsisIcon,
   LogOutIcon,
@@ -46,6 +45,7 @@ import { useRouter } from "next/navigation";
 export type MessageType = {
   role: "user" | "assistant";
   text: string;
+  attachmentName?: string;
   status?: "active" | "completed";
 };
 
@@ -70,7 +70,7 @@ export default function Home() {
     },
   ]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [showSidebar, setShowSidebar] = useState<boolean>(true);
   const [showCompleted, setShowCompleted] = useState<boolean>(false);
   const [time, setTime] = useState<Date | null>(null);
@@ -144,32 +144,45 @@ export default function Home() {
     const token = await user.getIdToken();
     const payload = text.trim();
 
-    console.log({ payload });
+    if (!payload && !selectedFile) return;
 
-    if (!payload) return;
-
-    //TODO: Set "loading" state for messages that are still processing
-    setMessages((prev) => [...prev, { role: "user", text: payload as string }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "user",
+        text: payload,
+        attachmentName: selectedFile?.name,
+      },
+    ]);
 
     setInput("");
 
     try {
       const formData = new FormData();
       formData.append("message", payload);
+<<<<<<< HEAD
       formData.append("status", "active");
       formData.append("user_id", user?.uid || "clarissa");
       formData.append("session_id", "domus-demo");
+=======
+      formData.append("user_id", "clarissa");
+      formData.append("session_id", "domus-demo");
+
+>>>>>>> 7273eda (Improve Domus chat UI, assistant bubble layout, avatar, image attachments, and backend fixes)
       if (selectedFile) {
         formData.append("image", selectedFile);
       }
 
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
+<<<<<<< HEAD
 
         headers: {
           Authorization: `Bearer ${token}`,
         },
 
+=======
+>>>>>>> 7273eda (Improve Domus chat UI, assistant bubble layout, avatar, image attachments, and backend fixes)
         body: formData,
       });
 
@@ -179,20 +192,21 @@ export default function Home() {
 
       setMessages((prev) => [
         ...prev,
-
         { role: "assistant", text: data.reply ?? "No response from Domus" },
       ]);
 
       await getMemory();
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (err) {
       console.log("Chat failed: ", err);
 
       setMessages((prev) => [
         ...prev,
-
         {
           role: "assistant",
-
           text: "Something went wrong.",
         },
       ]);
@@ -204,7 +218,7 @@ export default function Home() {
 
     const payload = input.trim();
 
-    if (payload) {
+    if (payload || selectedFile) {
       createMemory(payload);
     } else {
       // Execute Voice Recording / AudioLinesIcon logic
@@ -383,6 +397,16 @@ export default function Home() {
               className="grid w-full shrink-0 gap-2 p-4"
               onSubmit={handleSubmit}
             >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setSelectedFile(file);
+                }}
+              />
               <Textarea
                 placeholder="What do I need to know?"
                 className="bg-muted rounded-md border-none shadow-none"
@@ -390,6 +414,25 @@ export default function Home() {
                 onKeyDown={handleKeyDown}
                 value={input}
               />
+              {selectedFile && (
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <p className="text-muted-foreground truncate">
+                    Attached: {selectedFile.name}
+                  </p>
+                  <button
+                    type="button"
+                    className="text-blue-700 hover:underline"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
 
               <div className="flex justify-between">
                 <DropdownMenu>
@@ -409,7 +452,9 @@ export default function Home() {
                     className="w-56"
                   >
                     <DropdownMenuGroup>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => fileInputRef.current?.click()}
+                      >
                         <PaperclipIcon className="mr-2" />
                         Add photos &amp; files
                       </DropdownMenuItem>
@@ -417,8 +462,13 @@ export default function Home() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Button type="submit" className="rounded-md" size={"icon"}>
-                  {input ? <SendHorizonalIcon /> : <AudioLinesIcon />}
+                <Button
+                  type="submit"
+                  className="rounded-md"
+                  size={"icon"}
+                  disabled={!input.trim() && !selectedFile}
+                >
+                  <SendHorizonalIcon />
                 </Button>
               </div>
             </form>

@@ -15,11 +15,16 @@ export default function Message({
     <div>
       <div
         className={clsx(
-          message.role === "assistant" ? "" : "flex flex-row-reverse",
+          "mb-4 flex items-start gap-3",
+          message.role === "assistant" ? "" : "flex-row-reverse",
         )}
       >
         {message.role === "assistant" ? (
-          <div className="mb-4 size-4 bg-black"></div>
+          <img
+            src="/domus-bot.svg"
+            alt="Domus"
+            className="mt-1 size-10 shrink-0"
+          />
         ) : (
           ""
         )}
@@ -27,7 +32,7 @@ export default function Message({
           className={clsx(
             "text-sm",
             message.role === "assistant"
-              ? "prose prose-sm prose-blue max-w-none"
+              ? "max-w-[520px] rounded-tr-xl rounded-br-xl rounded-bl-xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-sm"
               : "max-w-[320px] rounded-tl-md rounded-b-md border border-blue-100 bg-blue-50 p-2 text-blue-900",
             message.role === "user" && size === "lg" ? "max-w-[420px]" : "",
           )}
@@ -37,7 +42,14 @@ export default function Message({
               {message.text}
             </ReactMarkdown>
           ) : (
-            message.text
+            <div>
+              {message.text ? <p>{message.text}</p> : null}
+              {message.attachmentName ? (
+                <p className="mt-2 text-sm text-blue-700/80 truncate max-w-[260px]">
+                  📎 {message.attachmentName}
+                </p>
+              ) : null}
+            </div>
           )}
         </div>
       </div>

@@ -21,7 +21,13 @@ function Avatar({
         className
       )}
       {...props}
-    />
+    >
+      <img
+        src="/domus-bot.svg"
+        alt="Domus"
+        className="size-4 opacity-90"
+      />
+    </AvatarPrimitive.Fallback>
   )
 }
 

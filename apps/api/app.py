@@ -229,7 +229,7 @@ def get_briefing(user_data: dict = Depends(verify_firebase_token)):
 
 # ADK agent chat endpoint
 @app.post("/chat")
-async def chat(
+def chat(
     message: str = Form(""),
     user_id: str = Form("clarissa"),
     session_id: str = Form("domus-demo"),
@@ -255,7 +255,7 @@ async def chat(
         parts.append(types.Part(text=message))
 
     if image is not None:
-        image_bytes = await image.read()
+        image_bytes = image.file.read()
         parts.append(
             types.Part(
                 inline_data=types.Blob(
@@ -294,4 +294,9 @@ async def chat(
         print("CHAT ERROR:", repr(e))
         final_text = f"Domus error: {str(e)}"
 
+<<<<<<< HEAD:apps/api/app.py
     return {"reply": final_text}
+=======
+    print("FINAL TEXT:", final_text)
+    return {"reply": final_text}
+>>>>>>> 7273eda (Improve Domus chat UI, assistant bubble layout, avatar, image attachments, and backend fixes):backend/app.py
