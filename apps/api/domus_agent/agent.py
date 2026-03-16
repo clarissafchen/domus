@@ -14,6 +14,28 @@ if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY is not set in the environment.")
 
 
+DOMUS_AUTH_TOKEN = os.getenv("DOMUS_AUTH_TOKEN", "")
+
+
+def _auth_headers():
+    headers = {}
+    if DOMUS_AUTH_TOKEN:
+        headers["Authorization"] = f"Bearer {DOMUS_AUTH_TOKEN}"
+    return headers
+
+
+def _safe_error_message(err: Exception, action: str):
+    if isinstance(err, requests.HTTPError) and err.response is not None:
+        status_code = err.response.status_code
+        if status_code == 401:
+            return (
+                f"Domus could not {action} because the internal memory request was unauthorized. "
+                "The backend auth token is missing or expired."
+            )
+        return f"Domus could not {action} because the memory API returned {status_code}."
+    return f"Domus could not {action} due to an internal error."
+
+
 # -----------------------------
 # Household Memory Tools
 # -----------------------------
@@ -47,10 +69,18 @@ def get_household_memory():
     - what is on the household list
     - "What do I need to know?"
     """
-    res = requests.get("http://127.0.0.1:8000/memory")
-    res.raise_for_status()
-    data = res.json()
-    return data["items"]
+    try:
+        res = requests.get(
+            "http://127.0.0.1:8000/memory",
+            headers=_auth_headers(),
+        )
+        res.raise_for_status()
+        data = res.json()
+        return data.get("items", [])
+    except Exception as err:
+        return {
+            "error": _safe_error_message(err, "read household memory")
+        }
 
 
 def add_household_memory(
@@ -73,9 +103,23 @@ def add_household_memory(
     - status: active | completed
     """
 
-    res = requests.post(
-        "http://127.0.0.1:8000/memory",
-        json={
+    try:
+        res = requests.post(
+            "http://127.0.0.1:8000/memory",
+            headers=_auth_headers(),
+            json={
+                "text": text,
+                "type": type,
+                "subject": subject,
+                "details": details,
+                "scheduled_for": scheduled_for,
+                "status": status,
+            }
+        )
+        res.raise_for_status()
+
+        return {
+            "result": "memory stored",
             "text": text,
             "type": type,
             "subject": subject,
@@ -83,18 +127,16 @@ def add_household_memory(
             "scheduled_for": scheduled_for,
             "status": status,
         }
-    )
-    res.raise_for_status()
-
-    return {
-        "status": "memory stored",
-        "text": text,
-        "type": type,
-        "subject": subject,
-        "details": details,
-        "scheduled_for": scheduled_for,
-        "status": status,
-    }
+    except Exception as err:
+        return {
+            "error": _safe_error_message(err, "store household memory"),
+            "text": text,
+            "type": type,
+            "subject": subject,
+            "details": details,
+            "scheduled_for": scheduled_for,
+            "status": status,
+        }
 
 
 def delete_household_memory(id: str):
@@ -113,14 +155,21 @@ def delete_household_memory(id: str):
     and then pass that item's `id` into this tool.
     """
 
-    res = requests.delete(
-        "http://127.0.0.1:8000/memory",
-        json={"id": id}
-    )
+    try:
+        res = requests.delete(
+            "http://127.0.0.1:8000/memory",
+            headers=_auth_headers(),
+            json={"id": id}
+        )
 
-    res.raise_for_status()
+        res.raise_for_status()
 
-    return {"status": "memory deleted", "id": id}
+        return {"result": "memory deleted", "id": id}
+    except Exception as err:
+        return {
+            "error": _safe_error_message(err, "delete household memory"),
+            "id": id,
+        }
 
 def update_household_memory(
     id: str,
@@ -172,14 +221,21 @@ def update_household_memory(
     if status:
         payload["status"] = status
 
-    res = requests.put(
-        "http://127.0.0.1:8000/memory",
-        json=payload,
-    )
+    try:
+        res = requests.put(
+            "http://127.0.0.1:8000/memory",
+            headers=_auth_headers(),
+            json=payload,
+        )
 
-    res.raise_for_status()
+        res.raise_for_status()
 
-    return {"status": "memory updated", **payload}
+        return {"result": "memory updated", **payload}
+    except Exception as err:
+        return {
+            "error": _safe_error_message(err, "update household memory"),
+            **payload,
+        }
 
 # -----------------------------
 # Domus Agent
@@ -191,6 +247,8 @@ root_agent = Agent(
     description="Household assistant with shared structured memory",
     instruction="""
 You are Domus, a helpful household assistant that maintains a shared family memory list.
+
+If a tool returns an error field, do not pretend the action succeeded. Briefly explain the failure to the user and, when relevant, suggest they try again.
 
 You have five tools:
 - get_current_datetime
